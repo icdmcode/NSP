@@ -27,7 +27,7 @@ def read(filename):
             # print(s)
             S.append(s)
     print("输入数据集", filename)
-    # print(S)
+    print(S)
     return S
 
 
@@ -56,13 +56,11 @@ class sequencePattern:
 
 
 def prefixSpan(pattern, S, threshold):
-
     patterns = []
     f_list = frequent_items(S, pattern, threshold)
 
     for i in f_list:
         p = sequencePattern(pattern.sequence, pattern.support, i.sid_list)
-        # print("p.sid_list:",p.sid_list)
         p.append(i)
         patterns.append(p)
         p_S = build_projected_database(S, p)
@@ -76,8 +74,16 @@ def prefixSpan(pattern, S, threshold):
         patterns.extend(p_patterns)
 
     checkMemory()
+    # return patterns
+    # unique_patterns = patterns
+    # 去重：基于序列的字符串表示 数据集仅包含单项元素时可以删除
+    unique_patterns = {}
+    for p in patterns:
+        key = str(p.sequence)
+        if key not in unique_patterns:
+            unique_patterns[key] = p
 
-    return patterns
+    return list(unique_patterns.values())
 
 
 def frequent_items(S, pattern, threshold):
@@ -95,27 +101,38 @@ def frequent_items(S, pattern, threshold):
     else:
         last_e = []
 
+    # 统计完整的多元素项集 数据集仅包含单项元素时可以删除
+    full_itemsets = {}
+    sequence_ids_full = {}
     for idx, s in enumerate(S):
-        if len(s) == 0: continue  # 这里要注意细节！
+        for element in s:
+            if len(element) > 1:
+                element_key = tuple(element)
+                if element_key in full_itemsets:
+                    if idx + 1 not in sequence_ids_full.get(element_key, []):
+                        full_itemsets[element_key] += 1
+                        sequence_ids_full.setdefault(element_key, []).append(idx + 1)
+                else:
+                    full_itemsets[element_key] = 1
+                    sequence_ids_full[element_key] = [idx + 1]
+
+    for idx, s in enumerate(S):
+        if len(s) == 0: continue
         is_prefix = True
         for item in last_e:
             if item not in s[0]:
                 is_prefix = False
                 break
-        # print(is_prefix)
         if is_prefix and len(last_e) > 0:
             index = s[0].index(last_e[-1])
             if index < len(s[0]) - 1:
                 for item in s[0][index + 1:]:
                     if item in _items:
-                        # print("测试2")
-                        # print(s)
                         _items[item] += 1
                     else:
                         _items[item] = 1
                         sequence_ids__items[item] = []
                     sequence_ids__items[item].append(idx + 1)
-        # 有占位符_的情况
         if PLACE_HOLDER in s[0]:
             for item in s[0][1:]:
                 if item in _items:
@@ -125,7 +142,6 @@ def frequent_items(S, pattern, threshold):
                     sequence_ids__items[item] = []
                 sequence_ids__items[item].append(idx + 1)
             s = s[1:]
-        # 从下一个项集开始
         counted = []
         for element in s:
             for item in element:
@@ -138,18 +154,18 @@ def frequent_items(S, pattern, threshold):
                         sequence_ids_items[item] = []
                     sequence_ids_items[item].append(idx + 1)
 
-    # 最新：关于之前的错误，但是这样写并不能解决！
-    # 更新 items，将 _items 中的项合并回 items
-    # for k, v in _items.items():
-    #     if k not in items:
-    #         items[k] = 0
-    #     items[k] += v
+    # 创建 sequencePattern 对象
+    # 添加完整项集
+    for k, v in full_itemsets.items():
+        if v >= threshold:
+            f_list.append(sequencePattern([list(k)], v, sequence_ids_full.get(k, [])))
 
-    # 创建 sequencePattern 对象并记录序列编号
+    # 添加单个项
     for k, v in items.items():
-        # v += _items.get(k, 0)
         if v >= threshold:
             f_list.append(sequencePattern([[k]], v, sequence_ids_items.get(k, [])))
+
+    # 添加带占位符的项
     for k, v in _items.items():
         if v >= threshold:
             f_list.append(sequencePattern([[PLACE_HOLDER, k]], v, sequence_ids__items.get(k, [])))
@@ -234,12 +250,12 @@ def print_patterns(patterns):
     print("输出结果")
     num_patterns = len(patterns)
     print(f"序列模式数量: {num_patterns}")
-    """
+
     patterns = sorted(patterns, key=lambda x: x.sequence)
     for p in patterns:
         print(f"SequentialPattern({p.sequence}, {p.support}, {p.size}, {p.sid_list})")
     print(f"序列模式数量: {num_patterns}")
-    """
+
 
 
 def checkMemory():
@@ -261,7 +277,7 @@ def checkMemory():
 if __name__ == "__main__":
     maxMemory = 0
 
-    S = read("datasets/BMS1_4.txt")
+    S = read("datasets/test.txt")
 
     startTimestamp = time.time()
     # print(startTimestamp)
@@ -269,7 +285,7 @@ if __name__ == "__main__":
     formatted_time = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
     print(formatted_time)
 
-    patterns = prefixSpan(sequencePattern([], sys.maxsize), S, math.ceil(len(S)*0.005))
+    patterns = prefixSpan(sequencePattern([], sys.maxsize), S, math.ceil(len(S)*0.4))
     endTimestamp = time.time()
     # print(endTimestamp)
     local_time = time.localtime(endTimestamp)
@@ -277,7 +293,7 @@ if __name__ == "__main__":
     print(formatted_time)
 
     print_patterns(patterns) # 输出内容
-    save_patterns_to_csv(patterns, "test/psp_list_BMS1_4_0.005.csv")  # 保存到csv文件
+    save_patterns_to_csv(patterns, "test/psp_list_test_0.4.csv")  # 保存到csv文件
 
     # 输出时间和空间情况
     print("Total Time:" + str((endTimestamp - startTimestamp) * 1000) + " ms")

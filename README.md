@@ -4,9 +4,9 @@ This repository contains the source code for the paper submitted to ICDM 2026.
 
 ## Repository Structure
 
-- GA-NSP.py              : Main implementation of the proposed EGA-NSP algorithm
+- EGA-NSP.py             : Main implementation of the proposed EGA-NSP algorithm
 - PrefixSpan.py          : PrefixSpan algorithm for positive sequential pattern mining
-- PrefixSpan-eNSP.py     : Implementation of the e-NSP baseline method
+- e-NSP.py               : Implementation of the e-NSP baseline method
 - datasets/              : Folder containing all experimental datasets
 - test/                  : Output folder for mined patterns (CSV files)
 
@@ -38,9 +38,9 @@ Before running, modify the parameters in the main function:
 
 #### Option A: Using e-NSP (Baseline)
 
-Run PrefixSpan-eNSP.py:
+Run e-NSP.py:
 
-    python PrefixSpan-eNSP.py
+    python e-NSP.py
 
 Modify the parameters:
 
@@ -52,9 +52,9 @@ Modify the parameters:
 
 #### Option B: Using EGA-NSP (Proposed Method)
 
-Run GA-NSP.py:
+Run EGA-NSP.py:
 
-    python GA-NSP.py
+    python EGA-NSP.py
 
 Modify the parameters:
 
@@ -69,7 +69,7 @@ GA parameters (in the function call):
     genetic_algorithm(
         psp_list,
         min_sup,
-        population_size=500,     # Population size (P)
+        population_size=500,     # Population size (P, optional)
         num_generations=100,     # Number of iterations (G)
         mutation_rate=0.05,      # Mutation rate (M)
         crossover_rate=0.6,      # Crossover rate (C)
@@ -104,16 +104,12 @@ Dataset format (SPMF standard):
 - -1 separates items within a sequence
 - -2 marks the end of a sequence
 
-Example:
-    a b c -2
-    a (a b) -2
-
 ## Reproducibility
 
 To reproduce the experimental results:
 
 1. Run PrefixSpan.py for each dataset with the corresponding min_sup threshold
-2. Run GA-NSP.py for each dataset with the same min_sup threshold
+2. Run EGA-NSP.py for each dataset with the same min_sup threshold
 
 The code outputs:
 - Total runtime (in milliseconds)

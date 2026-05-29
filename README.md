@@ -1,4 +1,4 @@
-# Code for "EGA-NSP: Efficient Negative Sequential Pattern Mining Based on Improved Genetic Algorithm"
+# Code for "EGA-NSP: An Efficient Genetic Algorithm for Negative Sequential Pattern Mining"
 
 This repository contains the source code for the paper submitted to ICDM 2026.
 
